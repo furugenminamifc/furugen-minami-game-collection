@@ -16,3 +16,4 @@ PKチャレンジ プレミアム版
 ・PWA／オフライン対応
 
 この5ファイルを furugen-minami-game-collection リポジトリのルートへ上書きしてください。
+Ver.4.1
