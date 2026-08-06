@@ -35,7 +35,7 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1｜PKチャレンジ プレミアム完全版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.1｜クリック動作 完全修正版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -108,7 +108,7 @@ function fillPlayers(){
  player.innerHTML=opts; keeper.innerHTML=opts;
  if(players.length>1) keeper.value='1';
  updateVersus();
-}">${p.category}｜${p.name}</option>`).join('')}
+}
 
 function keeperStats(index){
  const p=players[index]||players[0];
@@ -211,7 +211,7 @@ function finishMatch(){
  renderRanking();renderSaveRanking();
  result.textContent=`終了！ ${p.name} ${goals}G / ${k.name} ${saves}セーブ`;
  shootBtn.disabled=true;
-});arr.sort((a,b)=>b.points-a.points||b.goals-a.goals);localStorage.setItem('furugen_pk_rank_v4',JSON.stringify(arr.slice(0,20)));localStorage.setItem('furugen_training_points',String((+localStorage.getItem('furugen_training_points')||0)+points));renderRanking();result.textContent=`終了！ ${goals}ゴール・${points}ポイント獲得！`;shootBtn.disabled=true}
+}
 function updateStats(){document.getElementById('round').textContent=round+'/5';document.getElementById('goals').textContent=goals;document.getElementById('streak').textContent=streak;document.getElementById('points').textContent=points}
 function renderShots(){shots.innerHTML=records.map((r,i)=>`<div class="shot ${r}">${r==='goal'?'○':r==='save'?'止':'×'}</div>`).join('')}
 function renderRanking(){
@@ -221,7 +221,7 @@ function renderRanking(){
 function renderSaveRanking(){
  let arr=JSON.parse(localStorage.getItem('furugen_save_rank_v41')||'[]');
  saveRanking.innerHTML=arr.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.kicker}</td><td>${r.mode}</td><td>${r.saves}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="6">まだ記録がありません</td></tr>';
-}</td><td>${r.name}</td><td>${r.diff}</td><td>${r.goals}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="5">まだ記録がありません</td></tr>'}
+}
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 fillPlayers();modeChanged();
 </script>
