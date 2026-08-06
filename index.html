@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.0</title>
+<title>古堅南FC ゲームコレクション Ver.4.1 完全版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -30,12 +30,12 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 .needle{position:absolute;top:-4px;bottom:-4px;width:6px;background:#0f172a;left:0%;border-radius:4px} .result{text-align:center;font-size:28px;font-weight:900;min-height:42px}
 .shots{display:flex;justify-content:center;gap:8px;flex-wrap:wrap} .shot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#cbd5e1;font-weight:900} .shot.goal{background:#22c55e;color:white} .shot.save{background:#ef4444;color:white} .shot.out{background:#64748b;color:white}
 .rank{width:100%;border-collapse:collapse;margin-top:12px} .rank th,.rank td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left} .rank th{background:#f8fafc}
-.note{font-size:12px;color:#475569;margin-top:12px} .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:900;color:white;text-shadow:0 8px 20px #000;z-index:20;background:#0002}
+.versus{margin:12px 0;padding:12px;border-radius:16px;background:linear-gradient(90deg,#e0f2fe,#fef3c7);text-align:center;font-weight:900;font-size:clamp(18px,4vw,28px)}.ability{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:#f1f5f9;font-size:12px;font-weight:800}.note{font-size:12px;color:#475569;margin-top:12px} .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:900;color:white;text-shadow:0 8px 20px #000;z-index:20;background:#0002}
 @media(max-width:700px){.menu{grid-template-columns:repeat(2,1fr)}.scorebar{grid-template-columns:repeat(2,1fr)}.goal-wrap{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.0｜PKチャレンジ プレミアム版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1｜PKチャレンジ プレミアム完全版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -53,10 +53,27 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 <section id="pk" class="panel hidden">
 <div class="row" style="justify-content:space-between;align-items:center"><div><span class="pill">PREMIUM</span><h2 style="margin:8px 0">PKチャレンジ完全版</h2></div><button class="secondary" onclick="goHome()">← メニュー</button></div>
 <div class="row">
-<label>キッカー <select id="player"></select></label>
+<label>モード <select id="gameMode" onchange="modeChanged()"><option value="cpu">CPU戦</option><option value="two">2人対戦</option></select></label>
+<label>キッカー <select id="player" onchange="updateVersus()"></select></label>
+<label>GK <select id="keeper" onchange="updateVersus()"></select></label>
 <label>難易度 <select id="difficulty"><option value="easy">やさしい</option><option value="normal" selected>ふつう</option><option value="hard">むずかしい</option><option value="legend">レジェンド</option></select></label>
 <label>シュート <select id="shotType"><option value="power">パワー</option><option value="curve">カーブ</option><option value="chip">チップ</option></select></label>
 <button class="primary" onclick="startMatch()">5本勝負スタート</button>
+</div>
+<div id="versus" class="versus">キッカー vs GK</div>
+<div class="row" style="justify-content:center">
+<span class="ability">🧤 GKセーブ力 <b id="gkAbility">--</b></span>
+<span class="ability">⚡ 反応 <b id="gkReaction">--</b></span>
+<span class="ability">📏 リーチ <b id="gkReach">--</b></span>
+</div>
+<div id="twoPlayerPanel" class="row hidden" style="justify-content:center;margin-top:12px">
+<label>GKが飛ぶコース <select id="manualGkZone">
+<option value="0">左上</option><option value="1">中央上</option><option value="2">右上</option>
+<option value="3">左</option><option value="4">中央</option><option value="5">右</option>
+<option value="6">左下</option><option value="7">中央下</option><option value="8">右下</option>
+</select></label>
+<button class="secondary" onclick="lockGkChoice()">GKコースを決定して隠す</button>
+<span id="gkLockState" class="pill">未決定</span>
 </div>
 <div class="scorebar"><div class="stat"><span>本数</span><b id="round">0/5</b></div><div class="stat"><span>ゴール</span><b id="goals">0</b></div><div class="stat"><span>連続</span><b id="streak">0</b></div><div class="stat"><span>ポイント</span><b id="points">0</b></div></div>
 <div class="shots" id="shots"></div>
@@ -69,7 +86,8 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 </div>
 <div class="powerbox"><div class="meter"><div class="needle" id="needle"></div></div><div class="row" style="justify-content:center;margin-top:10px"><button class="primary" id="shootBtn" onclick="shoot()" disabled>パワーを決めてシュート！</button></div></div>
 <div class="result" id="result">コースを選んでください</div>
-<h3>PKランキング</h3><table class="rank"><thead><tr><th>順位</th><th>選手</th><th>難易度</th><th>ゴール</th><th>ポイント</th></tr></thead><tbody id="ranking"></tbody></table>
+<h3>PKランキング</h3><table class="rank"><thead><tr><th>順位</th><th>キッカー</th><th>対戦GK</th><th>モード</th><th>ゴール</th><th>ポイント</th></tr></thead><tbody id="ranking"></tbody></table>
+<h3>セーブランキング</h3><table class="rank"><thead><tr><th>順位</th><th>GK</th><th>対戦キッカー</th><th>モード</th><th>セーブ</th><th>ポイント</th></tr></thead><tbody id="saveRanking"></tbody></table>
 </section>
 
 <section id="manager" class="panel hidden">
@@ -82,30 +100,129 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 const defaults=[{"name": "伊佐 環希", "category": "U-12"}, {"name": "桑江 奏花", "category": "U-12"}, {"name": "新島 聡太", "category": "U-12"}, {"name": "神山 絆都", "category": "U-12"}, {"name": "新里 駿介", "category": "U-12"}, {"name": "安次嶺 雄心", "category": "U-12"}, {"name": "宇良 渉輝", "category": "U-12"}, {"name": "比嘉 結士", "category": "U-12"}, {"name": "城間 有咲", "category": "U-12"}, {"name": "名嘉眞 朝逢", "category": "U-12"}, {"name": "山城 颯祐", "category": "U-12"}, {"name": "大城 仁咲", "category": "U-12"}, {"name": "ライオンズ キース", "category": "U-12"}, {"name": "伊波 咲希人", "category": "U-11"}, {"name": "伊敷 大可", "category": "U-11"}, {"name": "糸数 笑瑠", "category": "U-11"}, {"name": "比嘉 来翔", "category": "U-11"}, {"name": "新城 寛大", "category": "U-11"}, {"name": "神山 瑛吉", "category": "U-10"}, {"name": "泉 颯星", "category": "U-10"}, {"name": "松田 時歩", "category": "U-10"}, {"name": "比嘉 栞大", "category": "U-10"}, {"name": "比嘉 憲佑", "category": "U-10"}, {"name": "高江洲 和弦", "category": "U-10"}, {"name": "古謝 凱理", "category": "U-9"}, {"name": "ガジミエウ ミチ グンジ マルケス", "category": "U-9"}, {"name": "内間 蒼士", "category": "U-9"}, {"name": "新垣 音和", "category": "U-9"}, {"name": "與座 樹", "category": "U-8"}, {"name": "知花 成翼", "category": "U-8"}, {"name": "知花 光翼", "category": "U-8"}, {"name": "山内 心偉", "category": "U-8"}, {"name": "比嘉 憲七郎", "category": "U-8"}, {"name": "奥間 律", "category": "U-7"}, {"name": "中村 海斗", "category": "U-7"}, {"name": "山川 浬", "category": "U-7"}];
 let players=JSON.parse(localStorage.getItem('furugen_players')||'null')||defaults;
 let selectedZone=null, power=0, dir=1, timer=null, active=false, round=0, goals=0, streak=0, points=0, records=[];
+let saves=0, savePoints=0, lockedGkZone=null;
 const zonePos=[[22,20],[50,20],[78,20],[22,42],[50,42],[78,42],[22,64],[50,64],[78,64]];
 function savePlayers(){localStorage.setItem('furugen_players',JSON.stringify(players))}
-function fillPlayers(){const s=document.getElementById('player');s.innerHTML=players.map((p,i)=>`<option value="${i}">${p.category}｜${p.name}</option>`).join('')}
+function fillPlayers(){
+ const opts=players.map((p,i)=>`<option value="${i}">${p.category}｜${p.name}</option>`).join('');
+ player.innerHTML=opts; keeper.innerHTML=opts;
+ if(players.length>1) keeper.value='1';
+ updateVersus();
+}">${p.category}｜${p.name}</option>`).join('')}
+
+function keeperStats(index){
+ const p=players[index]||players[0];
+ const seed=[...p.name].reduce((a,c)=>a+c.charCodeAt(0),0);
+ const catBonus={'U-12':10,'U-11':8,'U-10':6,'U-9':4,'U-8':2,'U-7':0}[p.category]||0;
+ const save=Math.min(95,55+catBonus+(seed%18));
+ const reaction=Math.min(99,50+catBonus+((seed*3)%25));
+ const reach=Math.min(99,48+catBonus+((seed*7)%27));
+ return {save,reaction,reach};
+}
+function updateVersus(){
+ if(!players.length)return;
+ const k=players[+player.value]||players[0], g=players[+keeper.value]||players[0];
+ versus.textContent=`⚽ ${k.name}  vs  🧤 ${g.name}`;
+ const s=keeperStats(+keeper.value);
+ gkAbility.textContent=s.save; gkReaction.textContent=s.reaction; gkReach.textContent=s.reach;
+}
+function modeChanged(){
+ const two=gameMode.value==='two';
+ twoPlayerPanel.classList.toggle('hidden',!two);
+ difficulty.disabled=two;
+ lockedGkZone=null;
+ gkLockState.textContent=two?'未決定':'CPU操作';
+}
+function lockGkChoice(){
+ lockedGkZone=+manualGkZone.value;
+ gkLockState.textContent='決定済み';
+ manualGkZone.selectedIndex=4;
+ alert('GKコースを記憶しました。キッカーに交代してください。');
+}
+
 function goHome(){pk.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden')}
-function openPK(){home.classList.add('hidden');pk.classList.remove('hidden');fillPlayers();renderRanking();resetVisual()}
+function openPK(){home.classList.add('hidden');pk.classList.remove('hidden');fillPlayers();renderRanking();renderSaveRanking();modeChanged();resetVisual()}
 function coming(n){alert(n+'は次のバージョンで完全版を追加予定です。')}
 function showManager(){home.classList.add('hidden');manager.classList.remove('hidden');renderPlayers()}
 function renderPlayers(){playerTable.innerHTML=players.map((p,i)=>`<tr><td>${p.name}</td><td>${p.category}</td><td><button class="secondary" onclick="delPlayer(${i})">削除</button></td></tr>`).join('')}
 function addPlayer(){let n=newName.value.trim();if(!n)return;players.push({name:n,category:newCat.value});savePlayers();newName.value='';renderPlayers()}
 function delPlayer(i){if(confirm(players[i].name+'を削除しますか？')){players.splice(i,1);savePlayers();renderPlayers()}}
-function startMatch(){round=goals=streak=points=0;records=[];shots.innerHTML='';updateStats();result.textContent='コースを選んでください';resetVisual();active=true;shootBtn.disabled=true;countDown()}
+function startMatch(){
+ if(+player.value===+keeper.value){alert('キッカーとGKは別の選手を選んでください。');return}
+ if(gameMode.value==='two' && lockedGkZone===null){alert('先にGKが飛ぶコースを決定してください。');return}
+ round=goals=streak=points=saves=savePoints=0;records=[];shots.innerHTML='';updateStats();
+ result.textContent='コースを選んでください';resetVisual();active=true;shootBtn.disabled=true;countDown();
+}
 function countDown(){let c=3;countdown.classList.remove('hidden');countdown.textContent=c;let iv=setInterval(()=>{c--;if(c===0){countdown.textContent='START!'}else if(c<0){clearInterval(iv);countdown.classList.add('hidden');startMeter()}else countdown.textContent=c},600)}
 function startMeter(){clearInterval(timer);power=0;dir=1;timer=setInterval(()=>{power+=dir*2;if(power>=100){power=100;dir=-1}if(power<=0){power=0;dir=1}needle.style.left=power+'%'},20)}
 function selectZone(i){if(!active||round>=5)return;selectedZone=i;document.querySelectorAll('.zone').forEach(z=>z.classList.toggle('sel',+z.dataset.zone===i));result.textContent='パワーを決めてシュート！';shootBtn.disabled=false}
 function resetVisual(){selectedZone=null;document.querySelectorAll('.zone').forEach(z=>z.classList.remove('sel'));ball.style.left='50%';ball.style.bottom='6%';ball.style.top='auto';gk.style.left='50%';gk.style.top='44%';gk.style.transform='translate(-50%,-50%)';needle.style.left='0%'}
-function shoot(){if(selectedZone===null||round>=5)return;clearInterval(timer);shootBtn.disabled=true;round++;const d=difficulty.value;const st=shotType.value;const target=zonePos[selectedZone];const ideal=st==='chip'?55:st==='curve'?68:78;const accuracy=Math.max(0,100-Math.abs(power-ideal)*2);const gkChance={easy:.28,normal:.42,hard:.58,legend:.72}[d];const missChance=Math.max(.03,(55-accuracy)/120);let outcome='goal';const r=Math.random();const gkZone=Math.floor(Math.random()*9);if(r<missChance) outcome='out'; else if((gkZone===selectedZone && Math.random()<gkChance+0.18)||Math.random()<gkChance*.35) outcome='save';
-ball.style.left=target[0]+'%';ball.style.bottom='auto';ball.style.top=target[1]+'%';const gp=zonePos[gkZone];gk.style.left=gp[0]+'%';gk.style.top=gp[1]+'%';gk.style.transform='translate(-50%,-50%) scale(1.15)';
-setTimeout(()=>{if(outcome==='goal'){goals++;streak++;points+=100+streak*20+(d==='hard'?60:d==='legend'?100:d==='normal'?30:0);result.textContent='GOAL!! ⚽🔥'}else if(outcome==='save'){streak=0;result.textContent='GKセーブ！ 🧤'}else{streak=0;result.textContent='枠外！ 😵'}records.push(outcome);renderShots();updateStats();if(round>=5)finishMatch();else setTimeout(nextShot,1100)},560)}
-function nextShot(){resetVisual();result.textContent='次のコースを選んでください';startMeter()}
-function finishMatch(){active=false;clearInterval(timer);const p=players[+player.value];let arr=JSON.parse(localStorage.getItem('furugen_pk_rank_v4')||'[]');arr.push({name:p.name,diff:difficulty.options[difficulty.selectedIndex].text,goals,points,date:Date.now()});arr.sort((a,b)=>b.points-a.points||b.goals-a.goals);localStorage.setItem('furugen_pk_rank_v4',JSON.stringify(arr.slice(0,20)));localStorage.setItem('furugen_training_points',String((+localStorage.getItem('furugen_training_points')||0)+points));renderRanking();result.textContent=`終了！ ${goals}ゴール・${points}ポイント獲得！`;shootBtn.disabled=true}
+function shoot(){
+ if(selectedZone===null||round>=5)return;
+ clearInterval(timer);shootBtn.disabled=true;round++;
+ const d=difficulty.value, st=shotType.value, mode=gameMode.value;
+ const target=zonePos[selectedZone];
+ const ideal=st==='chip'?55:st==='curve'?68:78;
+ const accuracy=Math.max(0,100-Math.abs(power-ideal)*2);
+ const stats=keeperStats(+keeper.value);
+ const base={easy:.20,normal:.31,hard:.43,legend:.55}[d];
+ const gkChance=Math.min(.88,base+(stats.save-55)/180+(stats.reaction-50)/260);
+ const missChance=Math.max(.03,(55-accuracy)/120);
+ let outcome='goal';
+ const gkZone=mode==='two'?lockedGkZone:Math.floor(Math.random()*9);
+ if(Math.random()<missChance) outcome='out';
+ else if(gkZone===selectedZone && Math.random()<gkChance+.22) outcome='save';
+ else if(Math.abs((gkZone%3)-(selectedZone%3))<=1 && Math.random()<gkChance*.18) outcome='save';
+
+ ball.style.left=target[0]+'%';ball.style.bottom='auto';ball.style.top=target[1]+'%';
+ const gp=zonePos[gkZone];gk.style.left=gp[0]+'%';gk.style.top=gp[1]+'%';gk.style.transform='translate(-50%,-50%) scale(1.15)';
+ setTimeout(()=>{
+  if(outcome==='goal'){
+   goals++;streak++;points+=100+streak*20+(mode==='two'?40:(d==='hard'?60:d==='legend'?100:d==='normal'?30:0));
+   result.textContent='GOAL!! ⚽🔥';
+  }else if(outcome==='save'){
+   streak=0;saves++;savePoints+=120+(mode==='two'?60:Math.round(stats.save/2));
+   result.textContent=`${players[+keeper.value].name} がセーブ！ 🧤`;
+  }else{
+   streak=0;savePoints+=30;result.textContent='枠外！ 😵';
+  }
+  records.push(outcome);renderShots();updateStats();
+  if(round>=5)finishMatch();else setTimeout(nextShot,1100);
+ },560)
+}
+function nextShot(){
+ resetVisual();
+ if(gameMode.value==='two'){lockedGkZone=null;gkLockState.textContent='未決定';result.textContent='GKが次のコースを決めてください';}
+ else result.textContent='次のコースを選んでください';
+ startMeter();
+}
+function finishMatch(){
+ active=false;clearInterval(timer);
+ const p=players[+player.value], k=players[+keeper.value], mode=gameMode.value==='two'?'2人対戦':'CPU戦';
+ let arr=JSON.parse(localStorage.getItem('furugen_pk_rank_v41')||'[]');
+ arr.push({name:p.name,keeper:k.name,mode,goals,points,date:Date.now()});
+ arr.sort((a,b)=>b.points-a.points||b.goals-a.goals);
+ localStorage.setItem('furugen_pk_rank_v41',JSON.stringify(arr.slice(0,30)));
+ let sarr=JSON.parse(localStorage.getItem('furugen_save_rank_v41')||'[]');
+ sarr.push({name:k.name,kicker:p.name,mode,saves,points:savePoints,date:Date.now()});
+ sarr.sort((a,b)=>b.points-a.points||b.saves-a.saves);
+ localStorage.setItem('furugen_save_rank_v41',JSON.stringify(sarr.slice(0,30)));
+ localStorage.setItem('furugen_training_points',String((+localStorage.getItem('furugen_training_points')||0)+points));
+ renderRanking();renderSaveRanking();
+ result.textContent=`終了！ ${p.name} ${goals}G / ${k.name} ${saves}セーブ`;
+ shootBtn.disabled=true;
+});arr.sort((a,b)=>b.points-a.points||b.goals-a.goals);localStorage.setItem('furugen_pk_rank_v4',JSON.stringify(arr.slice(0,20)));localStorage.setItem('furugen_training_points',String((+localStorage.getItem('furugen_training_points')||0)+points));renderRanking();result.textContent=`終了！ ${goals}ゴール・${points}ポイント獲得！`;shootBtn.disabled=true}
 function updateStats(){document.getElementById('round').textContent=round+'/5';document.getElementById('goals').textContent=goals;document.getElementById('streak').textContent=streak;document.getElementById('points').textContent=points}
 function renderShots(){shots.innerHTML=records.map((r,i)=>`<div class="shot ${r}">${r==='goal'?'○':r==='save'?'止':'×'}</div>`).join('')}
-function renderRanking(){let arr=JSON.parse(localStorage.getItem('furugen_pk_rank_v4')||'[]');ranking.innerHTML=arr.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.diff}</td><td>${r.goals}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="5">まだ記録がありません</td></tr>'}
+function renderRanking(){
+ let arr=JSON.parse(localStorage.getItem('furugen_pk_rank_v41')||'[]');
+ ranking.innerHTML=arr.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.keeper}</td><td>${r.mode}</td><td>${r.goals}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="6">まだ記録がありません</td></tr>';
+}
+function renderSaveRanking(){
+ let arr=JSON.parse(localStorage.getItem('furugen_save_rank_v41')||'[]');
+ saveRanking.innerHTML=arr.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.kicker}</td><td>${r.mode}</td><td>${r.saves}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="6">まだ記録がありません</td></tr>';
+}</td><td>${r.name}</td><td>${r.diff}</td><td>${r.goals}</td><td>${r.points}</td></tr>`).join('')||'<tr><td colspan="5">まだ記録がありません</td></tr>'}
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-fillPlayers();
+fillPlayers();modeChanged();
 </script>
 </body></html>
