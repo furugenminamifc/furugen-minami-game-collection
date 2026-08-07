@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.3.1 開始位置・スマホ操作改善版</title>
+<title>古堅南FC ゲームコレクション Ver.4.3.2 開始動作・スマホ操作修正版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -70,7 +70,7 @@ text-shadow:0 8px 28px #000;backdrop-filter:blur(2px)}
 #dribble.playing{scroll-margin-top:6px}
 
 @media(max-width:700px){
- #dribble{padding-bottom:190px}
+ #dribble{padding-bottom:180px;overflow-x:hidden}
  #dribble .row{gap:6px}
  #dribble .row label{font-size:12px}
  #dribble .row select{max-width:145px}
@@ -79,10 +79,11 @@ text-shadow:0 8px 28px #000;backdrop-filter:blur(2px)}
  #dribble .dribble-message{font-size:16px;min-height:24px}
  #dribble .dribble-info{position:sticky;top:0;z-index:35}
  .dribble-wrap{max-width:420px}
- .dribble-controls{position:fixed;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);
- z-index:80;grid-template-columns:repeat(3,66px);gap:6px;padding:8px 12px;width:auto;
- border:2px solid #cbd5e1;background:#fffffff5}
- .ctrl{height:52px;font-size:24px;border-radius:13px}
+ .dribble-controls{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));transform:none;
+ z-index:80;grid-template-columns:repeat(3,minmax(58px,74px));gap:6px;padding:8px 12px;width:auto;
+ max-width:310px;margin:0 auto;border:2px solid #cbd5e1;background:#fffffff5;
+ box-sizing:border-box}
+ .ctrl{height:50px;min-width:0;font-size:23px;border-radius:13px;padding:0}
  .ctrl.boost{font-size:14px}
  .mobile-guide{display:none}
  .side-start{display:none}
@@ -133,7 +134,7 @@ text-shadow:0 8px 28px #000;backdrop-filter:blur(2px)}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.3.1｜開始位置・スマホ操作改善版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.3.2｜開始動作・スマホ操作修正版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -439,10 +440,9 @@ function resetDribbleState(){
 }
 async function startDribble(){
  if(dStarting)return;
- dStarting=true;
- dCountdownToken++;
- const token=dCountdownToken;
  stopDribble();
+ dStarting=true;
+ const token=++dCountdownToken;
  resetDribbleState();
  dribbleSection.classList.add('playing');
  dribbleStartTop.disabled=true;
@@ -453,7 +453,10 @@ async function startDribble(){
 
  await new Promise(resolve=>{
   requestAnimationFrame(()=>{
-   dribbleGameAnchor.scrollIntoView({behavior:'smooth',block:'center'});
+   dribbleGameAnchor.scrollIntoView({
+    behavior:'smooth',
+    block:window.matchMedia('(max-width:700px)').matches?'start':'center'
+   });
    setTimeout(resolve, window.matchMedia('(max-width:700px)').matches ? 550 : 450);
   });
  });
@@ -478,6 +481,9 @@ async function startDribble(){
  dribbleStartTop.disabled=false;
  dribbleStartSide.disabled=false;
  dAnim=requestAnimationFrame(dribbleLoop);
+ if(window.matchMedia('(max-width:700px)').matches){
+  setTimeout(()=>dribbleGameAnchor.scrollIntoView({behavior:'smooth',block:'start'}),80);
+ }
 }
 function stopDribble(){
  dRunning=false;
