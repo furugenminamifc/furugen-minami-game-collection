@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.1 完全版</title>
+<title>古堅南FC ゲームコレクション Ver.4.1.2 2人対戦操作ガイド版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -31,11 +31,23 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 .shots{display:flex;justify-content:center;gap:8px;flex-wrap:wrap} .shot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#cbd5e1;font-weight:900} .shot.goal{background:#22c55e;color:white} .shot.save{background:#ef4444;color:white} .shot.out{background:#64748b;color:white}
 .rank{width:100%;border-collapse:collapse;margin-top:12px} .rank th,.rank td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left} .rank th{background:#f8fafc}
 .versus{margin:12px 0;padding:12px;border-radius:16px;background:linear-gradient(90deg,#e0f2fe,#fef3c7);text-align:center;font-weight:900;font-size:clamp(18px,4vw,28px)}.ability{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:#f1f5f9;font-size:12px;font-weight:800}.note{font-size:12px;color:#475569;margin-top:12px} .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:900;color:white;text-shadow:0 8px 20px #000;z-index:20;background:#0002}
+
+.two-guide{margin:14px 0;padding:16px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#fff7ed);border:3px solid #38bdf8;box-shadow:0 8px 20px #0001}
+.two-guide .guide-title{font-size:18px;font-weight:900;margin-bottom:8px}
+.two-guide .guide-main{font-size:clamp(17px,3.5vw,24px);font-weight:900;line-height:1.45}
+.two-guide .guide-sub{margin-top:7px;color:#475569;font-weight:700}
+.guide-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.guide-step{padding:9px;border-radius:12px;background:#e2e8f0;text-align:center;font-size:12px;font-weight:800}
+.guide-step.current{background:#fbbf24;color:#422006;outline:3px solid #f59e0b}
+.guide-step.done{background:#22c55e;color:white}
+.turn-banner{margin:10px 0;padding:12px;border-radius:14px;text-align:center;font-size:20px;font-weight:900;background:#fef3c7}
+@media(max-width:700px){.guide-steps{grid-template-columns:1fr}.two-guide .guide-main{font-size:18px}}
+
 @media(max-width:700px){.menu{grid-template-columns:repeat(2,1fr)}.scorebar{grid-template-columns:repeat(2,1fr)}.goal-wrap{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.1｜クリック動作 完全修正版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.2｜2人対戦 操作ガイド版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -61,6 +73,19 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 <button class="primary" onclick="startMatch()">5本勝負スタート</button>
 </div>
 <div id="versus" class="versus">キッカー vs GK</div>
+
+<div id="twoPlayerGuide" class="two-guide hidden">
+  <div class="guide-title">👥 2人対戦の進め方</div>
+  <div id="guideMain" class="guide-main">① GK担当が飛ぶコースを決めます</div>
+  <div id="guideSub" class="guide-sub">キッカー担当は画面を見ないでください。</div>
+  <div class="guide-steps">
+    <div id="stepGk" class="guide-step current">① GKがコース決定</div>
+    <div id="stepPass" class="guide-step">② キッカーへ交代</div>
+    <div id="stepKick" class="guide-step">③ コース選択・シュート</div>
+  </div>
+</div>
+<div id="turnBanner" class="turn-banner hidden">🧤 GK担当の番です</div>
+
 <div class="row" style="justify-content:center">
 <span class="ability">🧤 GKセーブ力 <b id="gkAbility">--</b></span>
 <span class="ability">⚡ 反応 <b id="gkReaction">--</b></span>
@@ -126,18 +151,47 @@ function updateVersus(){
  const s=keeperStats(+keeper.value);
  gkAbility.textContent=s.save; gkReaction.textContent=s.reaction; gkReach.textContent=s.reach;
 }
+function setGuidePhase(phase){
+ if(gameMode.value!=='two')return;
+ [stepGk,stepPass,stepKick].forEach(x=>x.className='guide-step');
+ if(phase==='gk'){
+  stepGk.classList.add('current');
+  guideMain.textContent='① GK担当が飛ぶコースを決めてください';
+  guideSub.textContent='キッカー担当は画面を見ないでください。決めたら「GKコースを決定して隠す」を押します。';
+  turnBanner.textContent='🧤 GK担当の番です';
+ }else if(phase==='pass'){
+  stepGk.classList.add('done');stepPass.classList.add('current');
+  guideMain.textContent='② 画面をキッカー担当へ渡してください';
+  guideSub.textContent='GKのコースは隠れました。キッカー担当は「5本勝負スタート」を押してください。';
+  turnBanner.textContent='🔄 キッカー担当へ交代してください';
+ }else{
+  stepGk.classList.add('done');stepPass.classList.add('done');stepKick.classList.add('current');
+  guideMain.textContent='③ キッカー担当が狙うコースを選びます';
+  guideSub.textContent='ゴール内を選び、パワーゲージを見て「パワーを決めてシュート！」を押してください。';
+  turnBanner.textContent='⚽ キッカー担当の番です';
+ }
+}
 function modeChanged(){
  const two=gameMode.value==='two';
  twoPlayerPanel.classList.toggle('hidden',!two);
+ twoPlayerGuide.classList.toggle('hidden',!two);
+ turnBanner.classList.toggle('hidden',!two);
  difficulty.disabled=two;
  lockedGkZone=null;
  gkLockState.textContent=two?'未決定':'CPU操作';
+ if(two)setGuidePhase('gk');
 }
 function lockGkChoice(){
  lockedGkZone=+manualGkZone.value;
- gkLockState.textContent='決定済み';
+ gkLockState.textContent='決定済み・非表示';
  manualGkZone.selectedIndex=4;
- alert('GKコースを記憶しました。キッカーに交代してください。');
+ setGuidePhase('pass');
+ alert('GKコースを記憶して隠しました。画面をキッカー担当へ渡してください。');
+ if(active && round<5){
+  result.textContent='キッカー担当は狙うコースを選んでください';
+  setGuidePhase('kick');
+  startMeter();
+ }
 }
 
 function goHome(){pk.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden')}
@@ -149,13 +203,15 @@ function addPlayer(){let n=newName.value.trim();if(!n)return;players.push({name:
 function delPlayer(i){if(confirm(players[i].name+'を削除しますか？')){players.splice(i,1);savePlayers();renderPlayers()}}
 function startMatch(){
  if(+player.value===+keeper.value){alert('キッカーとGKは別の選手を選んでください。');return}
- if(gameMode.value==='two' && lockedGkZone===null){alert('先にGKが飛ぶコースを決定してください。');return}
+ if(gameMode.value==='two' && lockedGkZone===null){alert('先にGK担当が飛ぶコースを決め、「GKコースを決定して隠す」を押してください。');setGuidePhase('gk');return}
  round=goals=streak=points=saves=savePoints=0;records=[];shots.innerHTML='';updateStats();
- result.textContent='コースを選んでください';resetVisual();active=true;shootBtn.disabled=true;countDown();
+ result.textContent='コースを選んでください';resetVisual();active=true;shootBtn.disabled=true;
+ if(gameMode.value==='two')setGuidePhase('kick');
+ countDown();
 }
 function countDown(){let c=3;countdown.classList.remove('hidden');countdown.textContent=c;let iv=setInterval(()=>{c--;if(c===0){countdown.textContent='START!'}else if(c<0){clearInterval(iv);countdown.classList.add('hidden');startMeter()}else countdown.textContent=c},600)}
 function startMeter(){clearInterval(timer);power=0;dir=1;timer=setInterval(()=>{power+=dir*2;if(power>=100){power=100;dir=-1}if(power<=0){power=0;dir=1}needle.style.left=power+'%'},20)}
-function selectZone(i){if(!active||round>=5)return;selectedZone=i;document.querySelectorAll('.zone').forEach(z=>z.classList.toggle('sel',+z.dataset.zone===i));result.textContent='パワーを決めてシュート！';shootBtn.disabled=false}
+function selectZone(i){if(!active||round>=5)return;if(gameMode.value==='two'&&lockedGkZone===null){alert('先にGK担当が次のコースを決めてください。');setGuidePhase('gk');return;}selectedZone=i;document.querySelectorAll('.zone').forEach(z=>z.classList.toggle('sel',+z.dataset.zone===i));result.textContent='パワーを決めてシュート！';shootBtn.disabled=false}
 function resetVisual(){selectedZone=null;document.querySelectorAll('.zone').forEach(z=>z.classList.remove('sel'));ball.style.left='50%';ball.style.bottom='6%';ball.style.top='auto';gk.style.left='50%';gk.style.top='44%';gk.style.transform='translate(-50%,-50%)';needle.style.left='0%'}
 function shoot(){
  if(selectedZone===null||round>=5)return;
@@ -192,9 +248,16 @@ function shoot(){
 }
 function nextShot(){
  resetVisual();
- if(gameMode.value==='two'){lockedGkZone=null;gkLockState.textContent='未決定';result.textContent='GKが次のコースを決めてください';}
- else result.textContent='次のコースを選んでください';
- startMeter();
+ if(gameMode.value==='two'){
+  lockedGkZone=null;gkLockState.textContent='未決定';
+  result.textContent='GK担当が次のコースを決めてください';
+  shootBtn.disabled=true;
+  clearInterval(timer);
+  setGuidePhase('gk');
+ }else{
+  result.textContent='次のコースを選んでください';
+  startMeter();
+ }
 }
 function finishMatch(){
  active=false;clearInterval(timer);
