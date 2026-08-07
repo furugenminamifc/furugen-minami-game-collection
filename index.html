@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.2.3 スマホ・PC専用レイアウト版</title>
+<title>古堅南FC ゲームコレクション Ver.4.3.0 AIディフェンダー搭載版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -52,7 +52,11 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 
 
 
-#dribble .dribble-head{background:#ffffffed;padding:8px;border-radius:16px;backdrop-filter:blur(8px)}
+#dribble 
+.ai-badge{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:5px 10px;border-radius:999px;background:#7c3aed;color:white;font-size:12px;font-weight:900}
+.ai-status{margin:8px 0;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border:2px solid #8b5cf6;font-weight:800;text-align:center}
+
+.dribble-head{background:#ffffffed;padding:8px;border-radius:16px;backdrop-filter:blur(8px)}
 #dribble .dribble-info{background:#ffffffed;padding:6px;border-radius:16px;backdrop-filter:blur(8px)}
 .dribble-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .dribble-info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
@@ -93,7 +97,7 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.2.3｜スマホ・PC専用レイアウト版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.3.0｜AIディフェンダー搭載版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -168,7 +172,7 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 
 <section id="dribble" class="panel hidden">
   <div class="dribble-head">
-    <div><span class="pill">NEW GAME</span><h2 style="margin:8px 0">ドリブルチャレンジ完全版</h2></div>
+    <div><span class="pill">NEW GAME</span><span class="ai-badge">🤖 AI DEFENDER</span><h2 style="margin:8px 0">ドリブルチャレンジ AIディフェンダー版</h2></div>
     <button class="secondary" onclick="goHome()">← メニュー</button>
   </div>
   <div class="row">
@@ -182,14 +186,14 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
     </label>
     <button class="primary" onclick="startDribble()">チャレンジ開始</button>
   </div>
-  <div class="dribble-help">コーンと相手選手を避け、ボールを失わずにゴールへ進みます。スマホは縦長コート＋下部操作、PCは横に広いコート＋右側操作へ自動で切り替わります。</div>
+  <div class="dribble-help">コーンと相手選手を避け、ボールを失わずにゴールへ進みます。AIディフェンダーが選手の動きを見て追いかけます。スマホは縦長コート＋下部操作、PCは横に広いコート＋右側操作へ自動で切り替わります。</div>
   <div class="dribble-info">
     <div class="dribble-stat"><span>残り時間</span><b id="dribbleTime">30.0</b></div>
     <div class="dribble-stat"><span>ポイント</span><b id="dribbleScore">0</b></div>
     <div class="dribble-stat"><span>突破</span><b id="dribblePassed">0</b></div>
     <div class="dribble-stat"><span>ライフ</span><b id="dribbleLives">3</b></div>
   </div>
-  <div id="dribbleMessage" class="dribble-message">「チャレンジ開始」を押してください</div>
+  <div id="dribbleAiStatus" class="ai-status">🤖 AIディフェンダー待機中</div><div id="dribbleMessage" class="dribble-message">「チャレンジ開始」を押してください</div>
   <div class="dribble-play-area">
     <div class="dribble-wrap"><canvas id="dribbleCanvas" width="760" height="620"></canvas></div>
     <div>
@@ -321,6 +325,7 @@ const dribbleScore=document.getElementById('dribbleScore');
 const dribblePassed=document.getElementById('dribblePassed');
 const dribbleLives=document.getElementById('dribbleLives');
 const dribbleMessage=document.getElementById('dribbleMessage');
+const dribbleAiStatus=document.getElementById('dribbleAiStatus');
 const dribbleRanking=document.getElementById('dribbleRanking');
 const dCanvas=document.getElementById('dribbleCanvas');
 const dctx=dCanvas.getContext('2d');
@@ -354,9 +359,11 @@ function fillDribblePlayers(){
 }
 function dribbleConfig(){
  const v=dribbleDifficulty.value;
- return v==='easy'?{time:40,enemies:4,cones:8,speed:95}:
-        v==='hard'?{time:25,enemies:8,cones:15,speed:155}:
-        {time:30,enemies:6,cones:11,speed:125};
+ return v==='easy'
+  ?{time:40,enemies:4,cones:8,speed:85,chaseSpeed:105,vision:125,reaction:.65}
+  :v==='hard'
+  ?{time:25,enemies:8,cones:15,speed:145,chaseSpeed:185,vision:210,reaction:1}
+  :{time:30,enemies:6,cones:11,speed:115,chaseSpeed:145,vision:165,reaction:.82};
 }
 function makeObstacles(){
  const c=dribbleConfig(); dObstacles=[];
@@ -365,7 +372,14 @@ function makeObstacles(){
  }
  for(let i=0;i<c.enemies;i++){
   const x=65+Math.random()*630, y=(dMetrics.obstacleTop-10)+Math.random()*(dMetrics.obstacleRange+10);
-  dObstacles.push({type:'enemy',x,y,r:22,vx:(Math.random()<.5?-1:1)*c.speed*(.7+Math.random()*.5),vy:0,hit:false});
+  dObstacles.push({
+   type:'enemy',x,y,r:22,
+   vx:(Math.random()<.5?-1:1)*c.speed*(.7+Math.random()*.5),vy:0,
+   homeX:x,homeY:y,mode:i%3===0?'chase':'patrol',
+   chaseSpeed:c.chaseSpeed*(.88+Math.random()*.25),
+   vision:c.vision*(.9+Math.random()*.2),
+   reaction:c.reaction,alert:0,hit:false
+  });
  }
 }
 function resetDribbleState(){
@@ -378,7 +392,8 @@ function resetDribbleState(){
 }
 function startDribble(){
  stopDribble();resetDribbleState();dRunning=true;dLast=performance.now();
- dribbleMessage.textContent='スタート！ ゴールを目指してください';
+ dribbleMessage.textContent='スタート！ AIディフェンダーをかわしてゴールへ！';
+ dribbleAiStatus.textContent='🤖 AIディフェンダーが選手を追跡中';
  dAnim=requestAnimationFrame(dribbleLoop);
 }
 function stopDribble(){
@@ -408,15 +423,24 @@ function drawDribbleStart(){
  drawPitch();
  dctx.font='64px sans-serif';dctx.textAlign='center';dctx.fillText('⚽',380,dMetrics.startY-5);
  dctx.font='bold 30px sans-serif';dctx.fillStyle='white';dctx.fillText('ドリブルチャレンジ',380,dCanvas.height*.48);
- dctx.font='bold 19px sans-serif';dctx.fillText('コーンと相手選手を避けてゴールへ！',380,dCanvas.height*.54);
+ dctx.font='bold 19px sans-serif';dctx.fillText('AIディフェンダーをかわしてゴールへ！',380,dCanvas.height*.54);
 }
 function drawDribble(){
  drawPitch();
  for(const o of dObstacles){
   dctx.textAlign='center';dctx.textBaseline='middle';
+  if(o.type==='enemy' && !o.hit){
+   dctx.beginPath();
+   dctx.arc(o.x,o.y,o.vision,0,Math.PI*2);
+   dctx.fillStyle=o.alert>0?'#ef444422':'#fde04714';
+   dctx.fill();
+   dctx.strokeStyle=o.alert>0?'#ef444466':'#fde04733';
+   dctx.lineWidth=2;
+   dctx.stroke();
+  }
   dctx.font=o.type==='cone'?'34px sans-serif':'42px sans-serif';
   dctx.globalAlpha=o.hit?.45:1;
-  dctx.fillText(o.type==='cone'?'🔶':'🧍',o.x,o.y);
+  dctx.fillText(o.type==='cone'?'🔶':(o.alert>0?'🏃':'🧍'),o.x,o.y);
   dctx.globalAlpha=1;
  }
  dctx.font='38px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
@@ -428,15 +452,16 @@ function circleHit(a,b){return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r}
 function hitObstacle(o){
  if(o.hit||dInvincible>0)return;
  o.hit=true;dLives--;dScore=Math.max(0,dScore-100);dInvincible=1.4;
- dribbleMessage.textContent=dLives>0?'ボールを奪われた！ すぐ取り返そう！':'ゲームオーバー';
+ dribbleMessage.textContent=dLives>0?'AIディフェンダーに奪われた！ すぐ取り返そう！':'ゲームオーバー';
+ dribbleAiStatus.textContent='🚨 ディフェンダーとの接触！';
  updateDribbleStats();
  if(dLives<=0)finishDribble(false);
 }
 function finishDribble(goal){
  if(!dRunning)return;
  dRunning=false;dFinish=true;
- if(goal){dScore+=Math.round(dRemain*30)+dLives*200;dribbleMessage.textContent='GOAL!! ドリブル成功 🎉'}
- else if(dRemain<=0){dribbleMessage.textContent='時間切れ！ もう一度挑戦しよう'}
+ if(goal){dScore+=Math.round(dRemain*30)+dLives*200;dribbleMessage.textContent='GOAL!! AIディフェンダー突破成功 🎉';dribbleAiStatus.textContent='🏆 AIディフェンダーを完全突破！'}
+ else if(dRemain<=0){dribbleMessage.textContent='時間切れ！ もう一度挑戦しよう';dribbleAiStatus.textContent='🤖 AIディフェンダーに守り切られました'}
  saveDribbleRecord(goal?'ゴール':'失敗');updateDribbleStats();renderDribbleRanking();drawDribble();
 }
 function saveDribbleRecord(resultText){
@@ -449,6 +474,42 @@ function renderDribbleRanking(){
  const list=JSON.parse(localStorage.getItem('furugen_dribble_rank')||'[]');
  dribbleRanking.innerHTML=list.length?list.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.diff}</td><td>${r.score}</td><td>${r.passed}</td><td>${r.result}</td></tr>`).join(''):'<tr><td colspan="6">まだ記録がありません</td></tr>';
 }
+function updateAiDefender(o,dt){
+ if(o.type!=='enemy'||o.hit)return;
+ const c=dribbleConfig();
+ const dx=dPlayer.x-o.x,dy=dPlayer.y-o.y;
+ const dist=Math.hypot(dx,dy);
+ const seesPlayer=dist<o.vision;
+
+ if(seesPlayer){
+  o.alert=Math.min(1,o.alert+dt*3*o.reaction);
+ }else{
+  o.alert=Math.max(0,o.alert-dt*1.5);
+ }
+
+ if(o.alert>.35){
+  const m=Math.max(1,dist);
+  const predictX=dPlayer.x+(dBall.x-dPlayer.x)*.4;
+  const predictY=dPlayer.y+(dBall.y-dPlayer.y)*.25;
+  const pdx=predictX-o.x,pdy=predictY-o.y;
+  const pm=Math.max(1,Math.hypot(pdx,pdy));
+  o.x+=(pdx/pm)*o.chaseSpeed*dt;
+  o.y+=(pdy/pm)*o.chaseSpeed*.72*dt;
+ }else{
+  o.x+=o.vx*dt;
+  const returnY=(o.homeY-o.y)*dt*.7;
+  o.y+=returnY;
+  if(Math.abs(o.x-o.homeX)>135)o.vx*=-1;
+ }
+
+ o.x=Math.max(45,Math.min(715,o.x));
+ o.y=Math.max(dMetrics.obstacleTop-20,Math.min(dMetrics.maxY-55,o.y));
+}
+
+function countAlertDefenders(){
+ return dObstacles.filter(o=>o.type==='enemy'&&!o.hit&&o.alert>.35).length;
+}
+
 function dribbleLoop(t){
  if(!dRunning)return;
  const dt=Math.min(.035,(t-dLast)/1000);dLast=t;dRemain-=dt;dInvincible=Math.max(0,dInvincible-dt);
@@ -462,13 +523,16 @@ function dribbleLoop(t){
  dBall.y+=(dPlayer.y+34-dBall.y)*Math.min(1,dt*10);
  for(const o of dObstacles){
   if(o.type==='enemy'){
-   o.x+=o.vx*dt;
-   if(o.x<45||o.x>715){o.vx*=-1;o.x=Math.max(45,Math.min(715,o.x))}
+   updateAiDefender(o,dt);
   }
   if(!o.hit && circleHit(dPlayer,o)){hitObstacle(o)}
   if(!o.hit && dPlayer.y<o.y-35){o.hit=true;dPassed++;dScore+=o.type==='enemy'?120:70}
  }
  dScore+=Math.max(0,-dy)*dt*25;
+ const alertCount=countAlertDefenders();
+ dribbleAiStatus.textContent=alertCount>0
+  ?`🚨 ${alertCount}人のAIディフェンダーが追跡中！`
+  :'🤖 AIディフェンダーの視界を外れています';
  if(dPlayer.y<dMetrics.goalTrigger && dPlayer.x>dGoal.x && dPlayer.x<dGoal.x+dGoal.w){finishDribble(true);return}
  updateDribbleStats();drawDribble();dAnim=requestAnimationFrame(dribbleLoop);
 }
