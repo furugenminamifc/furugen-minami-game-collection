@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.2.0 ドリブルチャレンジ完全版</title>
+<title>古堅南FC ゲームコレクション Ver.4.2.1 ドリブル操作完全修正版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -68,7 +68,7 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.2.0｜ドリブルチャレンジ完全版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.2.1｜ドリブル操作 完全修正版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -271,9 +271,26 @@ function lockGkChoice(){
  }
 }
 
-function goHome(){pk.classList.add('hidden');dribble.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden');stopDribble()}
-function openPK(){home.classList.add('hidden');pk.classList.remove('hidden');
+function goHome(){pk.classList.add('hidden');dribbleSection.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden');stopDribble()}
+function openPK(){
+ home.classList.add('hidden');
+ pk.classList.remove('hidden');
+ fillPlayers();
+ renderRanking();
+ renderSaveRanking();
+ modeChanged();
+ resetVisual();
+}
 // ===== ドリブルチャレンジ =====
+const dribbleSection=document.getElementById('dribble');
+const dribblePlayer=document.getElementById('dribblePlayer');
+const dribbleDifficulty=document.getElementById('dribbleDifficulty');
+const dribbleTime=document.getElementById('dribbleTime');
+const dribbleScore=document.getElementById('dribbleScore');
+const dribblePassed=document.getElementById('dribblePassed');
+const dribbleLives=document.getElementById('dribbleLives');
+const dribbleMessage=document.getElementById('dribbleMessage');
+const dribbleRanking=document.getElementById('dribbleRanking');
 const dCanvas=document.getElementById('dribbleCanvas');
 const dctx=dCanvas.getContext('2d');
 let dRunning=false,dAnim=null,dLast=0,dRemain=30,dScore=0,dPassed=0,dLives=3,dFinish=false;
@@ -423,9 +440,8 @@ document.querySelectorAll('.ctrl').forEach(btn=>{
  btn.addEventListener('pointercancel',off);btn.addEventListener('pointerleave',off);
 });
 
-fillPlayers();renderRanking();renderSaveRanking();modeChanged();resetVisual()}
 function openDribble(){
- home.classList.add('hidden');dribble.classList.remove('hidden');
+ home.classList.add('hidden');dribbleSection.classList.remove('hidden');
  fillDribblePlayers();renderDribbleRanking();drawDribbleStart();
 }
 function coming(n){alert(n+'は次のバージョンで完全版を追加予定です。')}
