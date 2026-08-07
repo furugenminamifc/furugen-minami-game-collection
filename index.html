@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.1.3 GKコース完全非表示版</title>
+<title>古堅南FC ゲームコレクション Ver.4.2.0 ドリブルチャレンジ完全版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -49,17 +49,32 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 .turn-banner{margin:10px 0;padding:12px;border-radius:14px;text-align:center;font-size:20px;font-weight:900;background:#fef3c7}
 @media(max-width:700px){.guide-steps{grid-template-columns:1fr}.two-guide .guide-main{font-size:18px}}
 
+
+.dribble-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dribble-info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.dribble-stat{background:white;border-radius:14px;padding:10px;text-align:center;box-shadow:0 3px 12px #0001}
+.dribble-stat b{display:block;font-size:22px}
+.dribble-wrap{max-width:760px;margin:12px auto;background:#14532d;border:5px solid white;border-radius:20px;overflow:hidden;box-shadow:0 12px 30px #0003}
+#dribbleCanvas{display:block;width:100%;height:auto;touch-action:none;background:linear-gradient(#16a34a,#15803d)}
+.dribble-controls{display:grid;grid-template-columns:repeat(3,82px);gap:8px;justify-content:center;margin:14px auto;user-select:none}
+.ctrl{height:62px;border:0;border-radius:16px;background:#e2e8f0;font-size:28px;font-weight:900;box-shadow:0 4px 10px #0002;touch-action:none}
+.ctrl:active{transform:scale(.96);background:#bae6fd}
+.ctrl.up{grid-column:2}.ctrl.left{grid-column:1}.ctrl.boost{grid-column:2;background:#fbbf24;font-size:17px}.ctrl.right{grid-column:3}.ctrl.down{grid-column:2}
+.dribble-message{text-align:center;font-size:22px;font-weight:900;min-height:34px;margin:8px 0}
+.dribble-help{padding:12px;border-radius:14px;background:#eff6ff;border:2px solid #38bdf8;font-weight:700}
+@media(max-width:700px){.dribble-info{grid-template-columns:repeat(2,1fr)}.dribble-controls{grid-template-columns:repeat(3,72px)}.ctrl{height:58px}}
+
 @media(max-width:700px){.menu{grid-template-columns:repeat(2,1fr)}.scorebar{grid-template-columns:repeat(2,1fr)}.goal-wrap{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.3｜GKコース完全非表示版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.2.0｜ドリブルチャレンジ完全版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
 <div class="menu">
 <button class="tile active" onclick="openPK()"><span>🥅</span>PKチャレンジ<br>プレミアム版</button>
-<button class="tile" onclick="coming('ドリブルチャレンジ')"><span>🏃</span>ドリブルチャレンジ</button>
+<button class="tile" onclick="openDribble()"><span>🏃</span>ドリブルチャレンジ<br>完全版</button>
 <button class="tile" onclick="coming('3対3ミニ試合')"><span>⚽</span>3対3ミニ試合</button>
 <button class="tile" onclick="coming('選手育成')"><span>📈</span>選手育成</button>
 <button class="tile" onclick="coming('フォーメーション')"><span>📋</span>フォーメーション</button>
@@ -123,6 +138,46 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 <div class="result" id="result">コースを選んでください</div>
 <h3>PKランキング</h3><table class="rank"><thead><tr><th>順位</th><th>キッカー</th><th>対戦GK</th><th>モード</th><th>ゴール</th><th>ポイント</th></tr></thead><tbody id="ranking"></tbody></table>
 <h3>セーブランキング</h3><table class="rank"><thead><tr><th>順位</th><th>GK</th><th>対戦キッカー</th><th>モード</th><th>セーブ</th><th>ポイント</th></tr></thead><tbody id="saveRanking"></tbody></table>
+</section>
+
+
+<section id="dribble" class="panel hidden">
+  <div class="dribble-head">
+    <div><span class="pill">NEW GAME</span><h2 style="margin:8px 0">ドリブルチャレンジ完全版</h2></div>
+    <button class="secondary" onclick="goHome()">← メニュー</button>
+  </div>
+  <div class="row">
+    <label>選手 <select id="dribblePlayer"></select></label>
+    <label>難易度
+      <select id="dribbleDifficulty">
+        <option value="easy">やさしい</option>
+        <option value="normal" selected>ふつう</option>
+        <option value="hard">むずかしい</option>
+      </select>
+    </label>
+    <button class="primary" onclick="startDribble()">チャレンジ開始</button>
+  </div>
+  <div class="dribble-help">コーンと相手選手を避け、ボールを失わずにゴールへ進みます。Macは矢印キー／WASD、スマホ・タブレットは画面下の操作ボタンを使います。</div>
+  <div class="dribble-info">
+    <div class="dribble-stat"><span>残り時間</span><b id="dribbleTime">30.0</b></div>
+    <div class="dribble-stat"><span>ポイント</span><b id="dribbleScore">0</b></div>
+    <div class="dribble-stat"><span>突破</span><b id="dribblePassed">0</b></div>
+    <div class="dribble-stat"><span>ライフ</span><b id="dribbleLives">3</b></div>
+  </div>
+  <div id="dribbleMessage" class="dribble-message">「チャレンジ開始」を押してください</div>
+  <div class="dribble-wrap"><canvas id="dribbleCanvas" width="760" height="900"></canvas></div>
+  <div class="dribble-controls">
+    <button class="ctrl up" data-dir="up">▲</button>
+    <button class="ctrl left" data-dir="left">◀</button>
+    <button class="ctrl boost" data-dir="boost">ダッシュ</button>
+    <button class="ctrl right" data-dir="right">▶</button>
+    <button class="ctrl down" data-dir="down">▼</button>
+  </div>
+  <h3>ドリブルランキング</h3>
+  <table class="rank">
+    <thead><tr><th>順位</th><th>選手</th><th>難易度</th><th>ポイント</th><th>突破数</th><th>結果</th></tr></thead>
+    <tbody id="dribbleRanking"></tbody>
+  </table>
 </section>
 
 <section id="manager" class="panel hidden">
@@ -216,8 +271,163 @@ function lockGkChoice(){
  }
 }
 
-function goHome(){pk.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden')}
-function openPK(){home.classList.add('hidden');pk.classList.remove('hidden');fillPlayers();renderRanking();renderSaveRanking();modeChanged();resetVisual()}
+function goHome(){pk.classList.add('hidden');dribble.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden');stopDribble()}
+function openPK(){home.classList.add('hidden');pk.classList.remove('hidden');
+// ===== ドリブルチャレンジ =====
+const dCanvas=document.getElementById('dribbleCanvas');
+const dctx=dCanvas.getContext('2d');
+let dRunning=false,dAnim=null,dLast=0,dRemain=30,dScore=0,dPassed=0,dLives=3,dFinish=false;
+let dKeys={up:false,down:false,left:false,right:false,boost:false};
+let dPlayer={x:380,y:790,r:19,speed:245};
+let dBall={x:380,y:825,r:12};
+let dObstacles=[],dGoal={x:255,y:25,w:250,h:50};
+let dInvincible=0;
+
+function fillDribblePlayers(){
+ const opts=players.map((p,i)=>`<option value="${i}">${p.category}｜${p.name}</option>`).join('');
+ dribblePlayer.innerHTML=opts;
+}
+function dribbleConfig(){
+ const v=dribbleDifficulty.value;
+ return v==='easy'?{time:40,enemies:4,cones:8,speed:95}:
+        v==='hard'?{time:25,enemies:8,cones:15,speed:155}:
+        {time:30,enemies:6,cones:11,speed:125};
+}
+function makeObstacles(){
+ const c=dribbleConfig(); dObstacles=[];
+ for(let i=0;i<c.cones;i++){
+  dObstacles.push({type:'cone',x:60+Math.random()*640,y:150+Math.random()*540,r:16,vx:0,vy:0,hit:false});
+ }
+ for(let i=0;i<c.enemies;i++){
+  const x=65+Math.random()*630,y=140+Math.random()*550;
+  dObstacles.push({type:'enemy',x,y,r:22,vx:(Math.random()<.5?-1:1)*c.speed*(.7+Math.random()*.5),vy:0,hit:false});
+ }
+}
+function resetDribbleState(){
+ const c=dribbleConfig();
+ dRemain=c.time;dScore=0;dPassed=0;dLives=3;dFinish=false;dInvincible=0;
+ dPlayer={x:380,y:790,r:19,speed:245};dBall={x:380,y:825,r:12};
+ dKeys={up:false,down:false,left:false,right:false,boost:false};
+ makeObstacles();updateDribbleStats();
+}
+function startDribble(){
+ stopDribble();resetDribbleState();dRunning=true;dLast=performance.now();
+ dribbleMessage.textContent='スタート！ ゴールを目指してください';
+ dAnim=requestAnimationFrame(dribbleLoop);
+}
+function stopDribble(){
+ dRunning=false;
+ if(dAnim)cancelAnimationFrame(dAnim);
+ dAnim=null;
+}
+function updateDribbleStats(){
+ dribbleTime.textContent=Math.max(0,dRemain).toFixed(1);
+ dribbleScore.textContent=Math.max(0,Math.round(dScore));
+ dribblePassed.textContent=dPassed;
+ dribbleLives.textContent=dLives;
+}
+function drawPitch(){
+ dctx.clearRect(0,0,dCanvas.width,dCanvas.height);
+ const g=dctx.createLinearGradient(0,0,0,dCanvas.height);
+ g.addColorStop(0,'#15803d');g.addColorStop(1,'#22c55e');
+ dctx.fillStyle=g;dctx.fillRect(0,0,dCanvas.width,dCanvas.height);
+ dctx.strokeStyle='#ffffff66';dctx.lineWidth=3;
+ for(let y=0;y<900;y+=100){dctx.beginPath();dctx.moveTo(0,y);dctx.lineTo(760,y);dctx.stroke()}
+ dctx.strokeStyle='white';dctx.lineWidth=7;dctx.strokeRect(18,18,724,864);
+ dctx.fillStyle='#e2e8f0';dctx.fillRect(dGoal.x,dGoal.y,dGoal.w,dGoal.h);
+ dctx.strokeStyle='white';dctx.lineWidth=7;dctx.strokeRect(dGoal.x,dGoal.y,dGoal.w,dGoal.h);
+ dctx.fillStyle='white';dctx.font='bold 24px sans-serif';dctx.textAlign='center';dctx.fillText('GOAL',380,62);
+}
+function drawDribbleStart(){
+ drawPitch();
+ dctx.font='64px sans-serif';dctx.textAlign='center';dctx.fillText('⚽',380,760);
+ dctx.font='bold 30px sans-serif';dctx.fillStyle='white';dctx.fillText('ドリブルチャレンジ',380,420);
+ dctx.font='bold 19px sans-serif';dctx.fillText('コーンと相手選手を避けてゴールへ！',380,460);
+}
+function drawDribble(){
+ drawPitch();
+ for(const o of dObstacles){
+  dctx.textAlign='center';dctx.textBaseline='middle';
+  dctx.font=o.type==='cone'?'34px sans-serif':'42px sans-serif';
+  dctx.globalAlpha=o.hit?.45:1;
+  dctx.fillText(o.type==='cone'?'🔶':'🧍',o.x,o.y);
+  dctx.globalAlpha=1;
+ }
+ dctx.font='38px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
+ if(dInvincible>0 && Math.floor(dInvincible*12)%2===0)dctx.globalAlpha=.25;
+ dctx.fillText('🏃',dPlayer.x,dPlayer.y);dctx.globalAlpha=1;
+ dctx.font='28px sans-serif';dctx.fillText('⚽',dBall.x,dBall.y);
+}
+function circleHit(a,b){return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r}
+function hitObstacle(o){
+ if(o.hit||dInvincible>0)return;
+ o.hit=true;dLives--;dScore=Math.max(0,dScore-100);dInvincible=1.4;
+ dribbleMessage.textContent=dLives>0?'ボールを奪われた！ すぐ取り返そう！':'ゲームオーバー';
+ updateDribbleStats();
+ if(dLives<=0)finishDribble(false);
+}
+function finishDribble(goal){
+ if(!dRunning)return;
+ dRunning=false;dFinish=true;
+ if(goal){dScore+=Math.round(dRemain*30)+dLives*200;dribbleMessage.textContent='GOAL!! ドリブル成功 🎉'}
+ else if(dRemain<=0){dribbleMessage.textContent='時間切れ！ もう一度挑戦しよう'}
+ saveDribbleRecord(goal?'ゴール':'失敗');updateDribbleStats();renderDribbleRanking();drawDribble();
+}
+function saveDribbleRecord(resultText){
+ const p=players[+dribblePlayer.value]||players[0];
+ const list=JSON.parse(localStorage.getItem('furugen_dribble_rank')||'[]');
+ list.push({name:p.name,diff:dribbleDifficulty.options[dribbleDifficulty.selectedIndex].text,score:Math.round(dScore),passed:dPassed,result:resultText,date:Date.now()});
+ list.sort((a,b)=>b.score-a.score);localStorage.setItem('furugen_dribble_rank',JSON.stringify(list.slice(0,30)));
+}
+function renderDribbleRanking(){
+ const list=JSON.parse(localStorage.getItem('furugen_dribble_rank')||'[]');
+ dribbleRanking.innerHTML=list.length?list.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.diff}</td><td>${r.score}</td><td>${r.passed}</td><td>${r.result}</td></tr>`).join(''):'<tr><td colspan="6">まだ記録がありません</td></tr>';
+}
+function dribbleLoop(t){
+ if(!dRunning)return;
+ const dt=Math.min(.035,(t-dLast)/1000);dLast=t;dRemain-=dt;dInvincible=Math.max(0,dInvincible-dt);
+ if(dRemain<=0){dRemain=0;finishDribble(false);return}
+ let dx=(dKeys.right?1:0)-(dKeys.left?1:0),dy=(dKeys.down?1:0)-(dKeys.up?1:0);
+ if(dx||dy){const m=Math.hypot(dx,dy);dx/=m;dy/=m}
+ const boost=dKeys.boost?1.55:1;
+ dPlayer.x+=dx*dPlayer.speed*boost*dt;dPlayer.y+=dy*dPlayer.speed*boost*dt;
+ dPlayer.x=Math.max(42,Math.min(718,dPlayer.x));dPlayer.y=Math.max(82,Math.min(850,dPlayer.y));
+ dBall.x+=(dPlayer.x-dBall.x)*Math.min(1,dt*10);
+ dBall.y+=(dPlayer.y+34-dBall.y)*Math.min(1,dt*10);
+ for(const o of dObstacles){
+  if(o.type==='enemy'){
+   o.x+=o.vx*dt;
+   if(o.x<45||o.x>715){o.vx*=-1;o.x=Math.max(45,Math.min(715,o.x))}
+  }
+  if(!o.hit && circleHit(dPlayer,o)){hitObstacle(o)}
+  if(!o.hit && dPlayer.y<o.y-35){o.hit=true;dPassed++;dScore+=o.type==='enemy'?120:70}
+ }
+ dScore+=Math.max(0,-dy)*dt*25;
+ if(dPlayer.y<85 && dPlayer.x>dGoal.x && dPlayer.x<dGoal.x+dGoal.w){finishDribble(true);return}
+ updateDribbleStats();drawDribble();dAnim=requestAnimationFrame(dribbleLoop);
+}
+function setDKey(dir,on){dKeys[dir]=on}
+document.addEventListener('keydown',e=>{
+ const m={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right',' ':'boost'};
+ if(m[e.key]){e.preventDefault();setDKey(m[e.key],true)}
+});
+document.addEventListener('keyup',e=>{
+ const m={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right',' ':'boost'};
+ if(m[e.key]){e.preventDefault();setDKey(m[e.key],false)}
+});
+document.querySelectorAll('.ctrl').forEach(btn=>{
+ const dir=btn.dataset.dir;
+ const on=e=>{e.preventDefault();setDKey(dir,true)};
+ const off=e=>{e.preventDefault();setDKey(dir,false)};
+ btn.addEventListener('pointerdown',on);btn.addEventListener('pointerup',off);
+ btn.addEventListener('pointercancel',off);btn.addEventListener('pointerleave',off);
+});
+
+fillPlayers();renderRanking();renderSaveRanking();modeChanged();resetVisual()}
+function openDribble(){
+ home.classList.add('hidden');dribble.classList.remove('hidden');
+ fillDribblePlayers();renderDribbleRanking();drawDribbleStart();
+}
 function coming(n){alert(n+'は次のバージョンで完全版を追加予定です。')}
 function showManager(){home.classList.add('hidden');manager.classList.remove('hidden');renderPlayers()}
 function renderPlayers(){playerTable.innerHTML=players.map((p,i)=>`<tr><td>${p.name}</td><td>${p.category}</td><td><button class="secondary" onclick="delPlayer(${i})">削除</button></td></tr>`).join('')}
