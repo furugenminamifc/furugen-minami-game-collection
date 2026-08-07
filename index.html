@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.3.0 AIディフェンダー搭載版</title>
+<title>古堅南FC ゲームコレクション Ver.4.3.1 開始位置・スマホ操作改善版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -56,6 +56,42 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 .ai-badge{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:5px 10px;border-radius:999px;background:#7c3aed;color:white;font-size:12px;font-weight:900}
 .ai-status{margin:8px 0;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border:2px solid #8b5cf6;font-weight:800;text-align:center}
 
+
+.dribble-wrap{position:relative}
+.countdown-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+background:#071a2ecc;color:white;font-size:clamp(72px,14vw,150px);font-weight:1000;z-index:40;
+text-shadow:0 8px 28px #000;backdrop-filter:blur(2px)}
+.countdown-overlay.hidden{display:none}
+.side-start{width:100%;margin-bottom:12px;font-size:17px;padding:14px}
+.play-ready-note{padding:10px;border-radius:13px;background:#fef3c7;color:#78350f;font-weight:900;text-align:center;margin-bottom:10px}
+#dribble.playing .dribble-head,
+#dribble.playing .dribble-help{display:none}
+#dribble.playing .dribble-info{margin-top:2px}
+#dribble.playing{scroll-margin-top:6px}
+
+@media(max-width:700px){
+ #dribble{padding-bottom:190px}
+ #dribble .row{gap:6px}
+ #dribble .row label{font-size:12px}
+ #dribble .row select{max-width:145px}
+ #dribble .row .primary{padding:10px 12px}
+ #dribble .ai-status{font-size:13px;padding:7px;margin:5px 0}
+ #dribble .dribble-message{font-size:16px;min-height:24px}
+ #dribble .dribble-info{position:sticky;top:0;z-index:35}
+ .dribble-wrap{max-width:420px}
+ .dribble-controls{position:fixed;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);
+ z-index:80;grid-template-columns:repeat(3,66px);gap:6px;padding:8px 12px;width:auto;
+ border:2px solid #cbd5e1;background:#fffffff5}
+ .ctrl{height:52px;font-size:24px;border-radius:13px}
+ .ctrl.boost{font-size:14px}
+ .mobile-guide{display:none}
+ .side-start{display:none}
+ #dribble.playing .row{display:none}
+}
+@media(min-width:701px){
+ #dribble.playing .dribble-play-area{scroll-margin-top:12px}
+}
+
 .dribble-head{background:#ffffffed;padding:8px;border-radius:16px;backdrop-filter:blur(8px)}
 #dribble .dribble-info{background:#ffffffed;padding:6px;border-radius:16px;backdrop-filter:blur(8px)}
 .dribble-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -97,7 +133,7 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.3.0｜AIディフェンダー搭載版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.3.1｜開始位置・スマホ操作改善版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -184,7 +220,7 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
         <option value="hard">むずかしい</option>
       </select>
     </label>
-    <button class="primary" onclick="startDribble()">チャレンジ開始</button>
+    <button id="dribbleStartTop" class="primary" onclick="startDribble()">チャレンジ開始</button>
   </div>
   <div class="dribble-help">コーンと相手選手を避け、ボールを失わずにゴールへ進みます。AIディフェンダーが選手の動きを見て追いかけます。スマホは縦長コート＋下部操作、PCは横に広いコート＋右側操作へ自動で切り替わります。</div>
   <div class="dribble-info">
@@ -195,8 +231,13 @@ font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
   </div>
   <div id="dribbleAiStatus" class="ai-status">🤖 AIディフェンダー待機中</div><div id="dribbleMessage" class="dribble-message">「チャレンジ開始」を押してください</div>
   <div class="dribble-play-area">
-    <div class="dribble-wrap"><canvas id="dribbleCanvas" width="760" height="620"></canvas></div>
+    <div id="dribbleGameAnchor" class="dribble-wrap">
+      <canvas id="dribbleCanvas" width="760" height="620"></canvas>
+      <div id="dribbleCountdown" class="countdown-overlay hidden">3</div>
+    </div>
     <div>
+      <div class="play-ready-note pc-guide">クリック後、3秒カウントダウンで開始します</div>
+      <button id="dribbleStartSide" class="primary side-start" onclick="startDribble()">この位置から開始</button>
       <div class="dribble-controls">
         <button class="ctrl up" data-dir="up">▲</button>
         <button class="ctrl left" data-dir="left">◀</button>
@@ -306,7 +347,7 @@ function lockGkChoice(){
  }
 }
 
-function goHome(){pk.classList.add('hidden');dribbleSection.classList.add('hidden');manager.classList.add('hidden');home.classList.remove('hidden');stopDribble()}
+function goHome(){pk.classList.add('hidden');dribbleSection.classList.add('hidden');dribbleSection.classList.remove('playing');manager.classList.add('hidden');home.classList.remove('hidden');stopDribble()}
 function openPK(){
  home.classList.add('hidden');
  pk.classList.remove('hidden');
@@ -327,6 +368,10 @@ const dribbleLives=document.getElementById('dribbleLives');
 const dribbleMessage=document.getElementById('dribbleMessage');
 const dribbleAiStatus=document.getElementById('dribbleAiStatus');
 const dribbleRanking=document.getElementById('dribbleRanking');
+const dribbleCountdown=document.getElementById('dribbleCountdown');
+const dribbleGameAnchor=document.getElementById('dribbleGameAnchor');
+const dribbleStartTop=document.getElementById('dribbleStartTop');
+const dribbleStartSide=document.getElementById('dribbleStartSide');
 const dCanvas=document.getElementById('dribbleCanvas');
 const dctx=dCanvas.getContext('2d');
 let dRunning=false,dAnim=null,dLast=0,dRemain=30,dScore=0,dPassed=0,dLives=3,dFinish=false;
@@ -335,6 +380,8 @@ let dPlayer={x:380,y:525,r:19,speed:245};
 let dBall={x:380,y:558,r:12};
 let dObstacles=[],dGoal={x:255,y:18,w:250,h:46};
 let dInvincible=0;
+let dCountdownToken=0;
+let dStarting=false;
 let dLayout='pc';
 let dMetrics={height:620,startY:525,ballY:558,minY:70,maxY:570,goalY:18,goalH:46,goalTrigger:72,obstacleTop:100,obstacleRange:365,lineGap:78};
 
@@ -343,7 +390,7 @@ function applyDribbleLayout(force=false){
  if(!force && next===dLayout)return;
  dLayout=next;
  dMetrics=next==='mobile'
-  ?{height:900,startY:790,ballY:825,minY:82,maxY:850,goalY:25,goalH:50,goalTrigger:85,obstacleTop:150,obstacleRange:540,lineGap:100}
+  ?{height:760,startY:650,ballY:684,minY:82,maxY:710,goalY:24,goalH:50,goalTrigger:84,obstacleTop:125,obstacleRange:445,lineGap:90}
   :{height:620,startY:525,ballY:558,minY:70,maxY:570,goalY:18,goalH:46,goalTrigger:72,obstacleTop:100,obstacleRange:365,lineGap:78};
  dCanvas.height=dMetrics.height;
  dGoal={x:255,y:dMetrics.goalY,w:250,h:dMetrics.goalH};
@@ -390,16 +437,57 @@ function resetDribbleState(){
  dKeys={up:false,down:false,left:false,right:false,boost:false};
  makeObstacles();updateDribbleStats();
 }
-function startDribble(){
- stopDribble();resetDribbleState();dRunning=true;dLast=performance.now();
+async function startDribble(){
+ if(dStarting)return;
+ dStarting=true;
+ dCountdownToken++;
+ const token=dCountdownToken;
+ stopDribble();
+ resetDribbleState();
+ dribbleSection.classList.add('playing');
+ dribbleStartTop.disabled=true;
+ dribbleStartSide.disabled=true;
+ dribbleMessage.textContent='操作位置へ移動します。準備してください';
+ dribbleAiStatus.textContent='⏳ 3秒後にAIディフェンダーが動きます';
+ drawDribble();
+
+ await new Promise(resolve=>{
+  requestAnimationFrame(()=>{
+   dribbleGameAnchor.scrollIntoView({behavior:'smooth',block:'center'});
+   setTimeout(resolve, window.matchMedia('(max-width:700px)').matches ? 550 : 450);
+  });
+ });
+
+ for(let n=3;n>=1;n--){
+  if(token!==dCountdownToken){dStarting=false;return}
+  dribbleCountdown.textContent=String(n);
+  dribbleCountdown.classList.remove('hidden');
+  dribbleMessage.textContent=`${n}… 操作の準備！`;
+  await new Promise(r=>setTimeout(r,800));
+ }
+ if(token!==dCountdownToken){dStarting=false;return}
+ dribbleCountdown.textContent='START!';
+ await new Promise(r=>setTimeout(r,450));
+ dribbleCountdown.classList.add('hidden');
+
+ dRunning=true;
+ dStarting=false;
+ dLast=performance.now();
  dribbleMessage.textContent='スタート！ AIディフェンダーをかわしてゴールへ！';
  dribbleAiStatus.textContent='🤖 AIディフェンダーが選手を追跡中';
+ dribbleStartTop.disabled=false;
+ dribbleStartSide.disabled=false;
  dAnim=requestAnimationFrame(dribbleLoop);
 }
 function stopDribble(){
  dRunning=false;
+ dStarting=false;
+ dCountdownToken++;
  if(dAnim)cancelAnimationFrame(dAnim);
  dAnim=null;
+ if(dribbleCountdown)dribbleCountdown.classList.add('hidden');
+ if(dribbleStartTop)dribbleStartTop.disabled=false;
+ if(dribbleStartSide)dribbleStartSide.disabled=false;
 }
 function updateDribbleStats(){
  dribbleTime.textContent=Math.max(0,dRemain).toFixed(1);
@@ -463,6 +551,7 @@ function finishDribble(goal){
  if(goal){dScore+=Math.round(dRemain*30)+dLives*200;dribbleMessage.textContent='GOAL!! AIディフェンダー突破成功 🎉';dribbleAiStatus.textContent='🏆 AIディフェンダーを完全突破！'}
  else if(dRemain<=0){dribbleMessage.textContent='時間切れ！ もう一度挑戦しよう';dribbleAiStatus.textContent='🤖 AIディフェンダーに守り切られました'}
  saveDribbleRecord(goal?'ゴール':'失敗');updateDribbleStats();renderDribbleRanking();drawDribble();
+ setTimeout(()=>dribbleSection.classList.remove('playing'),900);
 }
 function saveDribbleRecord(resultText){
  const p=players[+dribblePlayer.value]||players[0];

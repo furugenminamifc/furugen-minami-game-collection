@@ -1,7 +1,7 @@
 {
-  "name": "古堅南FC ゲームコレクション Ver.4.3.0",
+  "name": "古堅南FC ゲームコレクション Ver.4.3.1",
   "short_name": "古堅南FCゲーム",
-  "start_url": "./?v=430",
+  "start_url": "./?v=431",
   "display": "standalone",
   "background_color": "#16a34a",
   "theme_color": "#0ea5e9",
