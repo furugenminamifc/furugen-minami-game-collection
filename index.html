@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0ea5e9">
-<title>古堅南FC ゲームコレクション Ver.4.1.2 2人対戦操作ガイド版</title>
+<title>古堅南FC ゲームコレクション Ver.4.1.3 GKコース完全非表示版</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--sky:#0ea5e9;--deep:#075985;--grass:#16a34a;--card:#ffffffee;--gold:#fbbf24;--danger:#ef4444}
@@ -32,6 +32,12 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 .rank{width:100%;border-collapse:collapse;margin-top:12px} .rank th,.rank td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left} .rank th{background:#f8fafc}
 .versus{margin:12px 0;padding:12px;border-radius:16px;background:linear-gradient(90deg,#e0f2fe,#fef3c7);text-align:center;font-weight:900;font-size:clamp(18px,4vw,28px)}.ability{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:#f1f5f9;font-size:12px;font-weight:800}.note{font-size:12px;color:#475569;margin-top:12px} .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:900;color:white;text-shadow:0 8px 20px #000;z-index:20;background:#0002}
 
+
+.gk-secret{margin:12px auto;padding:14px 18px;max-width:520px;border-radius:16px;
+background:linear-gradient(135deg,#0f172a,#334155);color:#fff;text-align:center;
+font-size:18px;font-weight:900;box-shadow:0 8px 20px #0002}
+.gk-secret small{display:block;margin-top:5px;color:#cbd5e1;font-size:13px}
+
 .two-guide{margin:14px 0;padding:16px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#fff7ed);border:3px solid #38bdf8;box-shadow:0 8px 20px #0001}
 .two-guide .guide-title{font-size:18px;font-weight:900;margin-bottom:8px}
 .two-guide .guide-main{font-size:clamp(17px,3.5vw,24px);font-weight:900;line-height:1.45}
@@ -47,7 +53,7 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 </style>
 </head>
 <body>
-<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.2｜2人対戦 操作ガイド版</div></div></header>
+<header><div class="logo">⚽</div><div><h1>古堅南FC ゲームコレクション</h1><div class="sub">Ver.4.1.3｜GKコース完全非表示版</div></div></header>
 <main>
 <section id="home" class="panel">
 <h2>ゲームを選択</h2>
@@ -99,6 +105,10 @@ select,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;backg
 </select></label>
 <button class="secondary" onclick="lockGkChoice()">GKコースを決定して隠す</button>
 <span id="gkLockState" class="pill">未決定</span>
+</div>
+<div id="gkSecretPanel" class="gk-secret hidden">
+🔒 GKコース設定済み
+<small>設定したコースはキッカーには表示されません</small>
 </div>
 <div class="scorebar"><div class="stat"><span>本数</span><b id="round">0/5</b></div><div class="stat"><span>ゴール</span><b id="goals">0</b></div><div class="stat"><span>連続</span><b id="streak">0</b></div><div class="stat"><span>ポイント</span><b id="points">0</b></div></div>
 <div class="shots" id="shots"></div>
@@ -156,15 +166,21 @@ function setGuidePhase(phase){
  [stepGk,stepPass,stepKick].forEach(x=>x.className='guide-step');
  if(phase==='gk'){
   stepGk.classList.add('current');
+  twoPlayerPanel.classList.remove('hidden');
+  gkSecretPanel.classList.add('hidden');
   guideMain.textContent='① GK担当が飛ぶコースを決めてください';
   guideSub.textContent='キッカー担当は画面を見ないでください。決めたら「GKコースを決定して隠す」を押します。';
   turnBanner.textContent='🧤 GK担当の番です';
  }else if(phase==='pass'){
   stepGk.classList.add('done');stepPass.classList.add('current');
+  twoPlayerPanel.classList.add('hidden');
+  gkSecretPanel.classList.remove('hidden');
   guideMain.textContent='② 画面をキッカー担当へ渡してください';
-  guideSub.textContent='GKのコースは隠れました。キッカー担当は「5本勝負スタート」を押してください。';
+  guideSub.textContent='GKのコースは完全に非表示になりました。キッカー担当は「5本勝負スタート」を押してください。';
   turnBanner.textContent='🔄 キッカー担当へ交代してください';
  }else{
+  twoPlayerPanel.classList.add('hidden');
+  gkSecretPanel.classList.remove('hidden');
   stepGk.classList.add('done');stepPass.classList.add('done');stepKick.classList.add('current');
   guideMain.textContent='③ キッカー担当が狙うコースを選びます';
   guideSub.textContent='ゴール内を選び、パワーゲージを見て「パワーを決めてシュート！」を押してください。';
@@ -173,20 +189,26 @@ function setGuidePhase(phase){
 }
 function modeChanged(){
  const two=gameMode.value==='two';
- twoPlayerPanel.classList.toggle('hidden',!two);
  twoPlayerGuide.classList.toggle('hidden',!two);
  turnBanner.classList.toggle('hidden',!two);
  difficulty.disabled=two;
  lockedGkZone=null;
  gkLockState.textContent=two?'未決定':'CPU操作';
- if(two)setGuidePhase('gk');
+ if(two){
+  setGuidePhase('gk');
+ }else{
+  twoPlayerPanel.classList.add('hidden');
+  gkSecretPanel.classList.add('hidden');
+ }
 }
 function lockGkChoice(){
  lockedGkZone=+manualGkZone.value;
- gkLockState.textContent='決定済み・非表示';
- manualGkZone.selectedIndex=4;
+ gkLockState.textContent='🔒 設定済み';
+ manualGkZone.value='4';
+ twoPlayerPanel.classList.add('hidden');
+ gkSecretPanel.classList.remove('hidden');
  setGuidePhase('pass');
- alert('GKコースを記憶して隠しました。画面をキッカー担当へ渡してください。');
+ alert('GKコースを完全に隠しました。画面をキッカー担当へ渡してください。');
  if(active && round<5){
   result.textContent='キッカー担当は狙うコースを選んでください';
   setGuidePhase('kick');
